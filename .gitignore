@@ -1,0 +1,44 @@
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Virtual environment
+.venv/
+venv/
+.env
+env/
+
+# Editor and OS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+.vscode/
+Thumbs.db
+
+# Flask specific files
+instance/
+.flaskenv
+
+# Database files (if using SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+
+# Dependency management
+Pipfile.lock # Include if using pipenv and you want to track locked dependencies
+poetry.lock # Include if using Poetry and you want to track locked dependencies
+
+# Uploaded files or user-generated content
+uploads/
+static/uploads/
+.idea
+.vscode
+
+init_db/
+
+docker-compose.yml
+Dockerfile
+static/*
