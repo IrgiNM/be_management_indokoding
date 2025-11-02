@@ -10,10 +10,12 @@ urlpatterns = [
     path('createUser/', RegisterView.as_view(), name='api_create_user'),
     path('getUserAll/', GetUserAllView.as_view(), name='api_get_all_user'),
 
-    path('craeteCategory/', CreateCategoryView.as_view(), name='api_create_category'),
+    path('category/create/', CreateCategoryView.as_view(), name='api_create_category'),
 
-    path('reimbursements/', ReimbursementListView.as_view(), name='api_reimbursement_list'),
-    path('createReimbursement/', CreateReimburseView.as_view(), name='api_create_reimbursement'),
+    path('reimbursements/', GetReimburseAllView.as_view(), name='api_reimbursement_list'),
+    path('reimbursements/user/', GetReimburseUserView.as_view(), name='api_user_reimbursement'),
+    path('reimbursements/create/', CreateReimburseView.as_view(), name='api_create_reimbursement'),
+    path('reimbursements/update/<int:pk>', UpdateReimburseView.as_view(), name='api_update_reimbursement'),
 
     path('createReimbursementItem/', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),
 ]

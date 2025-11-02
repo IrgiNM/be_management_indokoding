@@ -25,7 +25,24 @@ class CreateCategoryView(generics.CreateAPIView):
 
 
 # REIMBURSE
+class GetReimburseAllView(generics.ListAPIView):
+    queryset = Reimbursement.objects.all()
+    permission_classes = (AllowAny,) 
+    serializer_class = ReimbursementSerializers
+
+class GetReimburseUserView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = ReimbursementSerializers
+    def get_queryset(self):
+        user = self.request.user
+        return Reimbursement.objects.filter(user=user)
+
 class CreateReimburseView(generics.CreateAPIView):
+    queryset = Reimbursement.objects.all()
+    permission_classes = (AllowAny,) 
+    serializer_class = ReimbursementSerializers
+
+class UpdateReimburseView(generics.UpdateAPIView):
     queryset = Reimbursement.objects.all()
     permission_classes = (AllowAny,) 
     serializer_class = ReimbursementSerializers

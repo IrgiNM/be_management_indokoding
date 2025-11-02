@@ -22,10 +22,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
         return user
     
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
+    def validate(self, data):
+        emailData = data.get('email')
+        if User.objects.filter(email=emailData).exists():
             raise serializers.ValidationError("email udah ada")
-        return
+        return data
     
     # def validate_username(self, value):
     #     if User.objects.filter(username=value).exists():
@@ -49,11 +50,6 @@ class ReimbursementSerializers(serializers.ModelSerializer):
             'image',
             'status'
         ]
-    
-    def validate_user(self, value):
-        if not User.objects.filter(id=value.id).exists():
-            raise serializers.ValidationError("User tidak ditemukan")
-        return value
 
 class CategorySerializers(serializers.ModelSerializer):
     class Meta:
@@ -64,10 +60,11 @@ class CategorySerializers(serializers.ModelSerializer):
             'created_at'
         ]
 
-    def validate_name(self, value):
-        if Category.objects.filter(name=value).exists():
+    def validate(self, data):
+        nameData = data.get('name')
+        if Category.objects.filter(name=nameData).exists():
             raise serializers.ValidationError("category udah ada")
-        return value
+        return data
 
 class ReimbursementItemSerializers(serializers.ModelSerializer):
     reimbursement_detail = ReimbursementSerializers(source='reimbursement', read_only=True)
@@ -85,16 +82,6 @@ class ReimbursementItemSerializers(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-
-    def validate_reimbursement(self, value):
-        if not Reimbursement.objects.filter(id=value.id).exists():
-            raise serializers.ValidationError("Reimbursement tidak ditemukan")
-        return value
-    
-    def validate_category(self, value):
-        if not Category.objects.filter(id=value.id).exists():
-            raise serializers.ValidationError("Category tidak ditemukan")
-        return value
     
 
 
