@@ -9,12 +9,18 @@ from rest_framework.permissions import IsAuthenticated
 # USER
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    permission_classes = (AllowAny,) # Izinkan siapa saja (tanpa login) untuk akses
+    permission_classes = (AllowAny,)
     serializer_class = UserSerializer
 
 class GetUserAllView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+class GetUserIdView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    def get_object(self):
+        return self.request.user # biar bisa ngambil dari header yang dikirim
 
 
 # CATEGORY
@@ -26,8 +32,8 @@ class CreateCategoryView(generics.CreateAPIView):
 
 # REIMBURSE
 class GetReimburseAllView(generics.ListAPIView):
-    queryset = Reimbursement.objects.all()
-    permission_classes = (AllowAny,) 
+    queryset = Reimbursement.objects.all().order_by('-created_at')
+    permission_classes = (IsAuthenticated)
     serializer_class = ReimbursementSerializers
 
 class GetReimburseUserView(generics.ListAPIView):
@@ -35,7 +41,7 @@ class GetReimburseUserView(generics.ListAPIView):
     serializer_class = ReimbursementSerializers
     def get_queryset(self):
         user = self.request.user
-        return Reimbursement.objects.filter(user=user)
+        return Reimbursement.objects.filter(user=user).order_by('-created_at')
 
 class CreateReimburseView(generics.CreateAPIView):
     queryset = Reimbursement.objects.all()
@@ -62,3 +68,15 @@ class CreateReimburseItemView(generics.CreateAPIView):
     queryset = ReimbursementItems.objects.all()
     permission_classes = (AllowAny,) 
     serializer_class = ReimbursementItemSerializers
+
+class GetReimburseItemView(generics.ListAPIView):
+    queryset = ReimbursementItems.objects.all()
+    permission_classes = [IsAuthenticated] 
+    serializer_class = ReimbursementItemSerializers
+
+class GetReimburseItemByIdView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated] 
+    serializer_class = ReimbursementItemSerializers
+    def get_queryset(self):
+        reimburse_id = self.kwargs['reimburse_id']
+        return ReimbursementItems.objects.filter(reimbursement=reimburse_id)

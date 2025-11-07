@@ -7,8 +7,9 @@ urlpatterns = [
     # Ini memberitahu Django, "Jika sisa URL-nya adalah 'login/',
     # jalankan fungsi 'obtain_auth_token'"
     path('login/', obtain_auth_token, name='api_login'),
-    path('createUser/', RegisterView.as_view(), name='api_create_user'),
-    path('getUserAll/', GetUserAllView.as_view(), name='api_get_all_user'),
+    path('user/create', RegisterView.as_view(), name='api_create_user'),
+    path('users/', GetUserAllView.as_view(), name='api_get_all_user'),
+    path('user/me', GetUserIdView.as_view(), name='api_get_id_user'),
 
     path('category/create/', CreateCategoryView.as_view(), name='api_create_category'),
 
@@ -17,6 +18,8 @@ urlpatterns = [
     path('reimbursements/create/', CreateReimburseView.as_view(), name='api_create_reimbursement'),
     path('reimbursements/update/<int:pk>', UpdateReimburseView.as_view(), name='api_update_reimbursement'),
 
-    path('createReimbursementItem/', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),
+    path('items/', GetReimburseItemView.as_view(), name='api_reimburse_item_list'),
+    path('item/create', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),
+    path('item/<int:reimburse_id>', GetReimburseItemByIdView.as_view(), name='api_reimburse_item_list_by_id'),
 ]
 
