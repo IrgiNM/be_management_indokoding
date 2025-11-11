@@ -12,6 +12,7 @@ urlpatterns = [
     path('user/me', GetUserIdView.as_view(), name='api_get_id_user'),
 
     path('category/create/', CreateCategoryView.as_view(), name='api_create_category'),
+    # path('category/create/', CategoryView.as_view(), name='api_create_category'),
 
     path('reimbursements/', GetReimburseAllView.as_view(), name='api_reimbursement_list'),
     path('reimbursements/user/', GetReimburseUserView.as_view(), name='api_user_reimbursement'),

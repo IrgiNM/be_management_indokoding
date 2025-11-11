@@ -1,9 +1,12 @@
 from django.contrib.auth.models import User
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from api.serializers import *
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 
 # USER
@@ -26,8 +29,27 @@ class GetUserIdView(generics.RetrieveAPIView):
 # CATEGORY
 class CreateCategoryView(generics.CreateAPIView):
     queryset = Category.objects.all()
-    permission_classes = (AllowAny,) 
+    permission_classes = (AllowAny,)
     serializer_class = CategorySerializers
+
+    def create(self, request, *args, **kwargs):
+        name = request.data.get('name')
+
+        # kalau tidak ada field 'name', kembalikan error
+        if not name:
+            return Response({'error': 'Field "name" wajib diisi'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # cek apakah kategori sudah ada
+        existing_category = Category.objects.filter(name=name).first()
+
+        if existing_category:
+            # kalau sudah ada, return data kategori itu (tanpa buat baru)
+            serializer = self.get_serializer(existing_category)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # kalau belum ada, buat baru seperti biasa
+        return super().create(request, *args, **kwargs)
+
 
 
 # REIMBURSE
@@ -45,8 +67,10 @@ class GetReimburseUserView(generics.ListAPIView):
 
 class CreateReimburseView(generics.CreateAPIView):
     queryset = Reimbursement.objects.all()
-    permission_classes = (AllowAny,) 
+    permission_classes = [permissions.IsAuthenticated] 
     serializer_class = ReimbursementSerializers
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class UpdateReimburseView(generics.UpdateAPIView):
     queryset = Reimbursement.objects.all()

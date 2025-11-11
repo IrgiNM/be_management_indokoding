@@ -36,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
         
 class ReimbursementSerializers(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Reimbursement
         fields = [
@@ -63,8 +64,22 @@ class CategorySerializers(serializers.ModelSerializer):
     def validate(self, data):
         nameData = data.get('name')
         if Category.objects.filter(name=nameData).exists():
-            raise serializers.ValidationError("category udah ada")
+            # raise serializers.ValidationError("category udah ada")
+            return Category.objects.get(name=nameData)
         return data
+
+# class CategorySerializers(serializers.ModelSerializer):
+#     class Meta:
+#         model = Category
+#         fields = ['id', 'name', 'created_at']
+
+#     def create(self, validated_data):
+#         category, created = Category.objects.get_or_create(
+#             name=validated_data.get('name')
+#         )
+#         return category
+
+
 
 class ReimbursementItemSerializers(serializers.ModelSerializer):
     reimbursement_detail = ReimbursementSerializers(source='reimbursement', read_only=True)
