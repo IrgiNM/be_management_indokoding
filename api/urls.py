@@ -15,9 +15,12 @@ urlpatterns = [
     # path('category/create/', CategoryView.as_view(), name='api_create_category'),
 
     path('reimbursements/', GetReimburseAllView.as_view(), name='api_reimbursement_list'),
+    path('reimbursements/<int:pk>', GetReimburseByIdView.as_view(), name='api_reimbursement_by_id'),
     path('reimbursements/user/', GetReimburseUserView.as_view(), name='api_user_reimbursement'),
+    path('reimbursements/thisMonth/', GetReimburseThisMonthView.as_view(), name='api_this_month_reimbursement'),
     path('reimbursements/create/', CreateReimburseView.as_view(), name='api_create_reimbursement'),
     path('reimbursements/update/<int:pk>', UpdateReimburseView.as_view(), name='api_update_reimbursement'),
+    path('reimbursements/delete/<int:pk>', DeleteReimburseByIdView.as_view(), name='api_delete_reimbursement'),
 
     path('items/', GetReimburseItemView.as_view(), name='api_reimburse_item_list'),
     path('item/create', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),

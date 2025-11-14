@@ -5,7 +5,7 @@ from .models import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'password', 'email']
+        fields = ['username', 'password', 'email', 'is_staff']
         extra_kwargs = {
             'password': {'write_only': True},
              'email': {'required': True} # 'write_only' artinya password tidak akan

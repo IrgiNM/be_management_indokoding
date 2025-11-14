@@ -7,17 +7,33 @@ from rest_framework.response import Response
 from api.serializers import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from .helpers import UserCheckRole
+from datetime import datetime
 
 
 # USER
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
+    
+    def create(self, request, *args, **kwargs):
+        role = UserCheckRole(request.user)
+        if not role:
+            return Response({'error': 'Failed you not staff'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
 class GetUserAllView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def list(self, request, *args, **kwargs):
+        role = UserCheckRole(request.user)
+        if not role:
+            return Response({'error': 'Failed you not staff'}, status=status.HTTP_400_BAD_REQUEST)
+        queryset = self.get_queryset()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class GetUserIdView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
@@ -55,8 +71,20 @@ class CreateCategoryView(generics.CreateAPIView):
 # REIMBURSE
 class GetReimburseAllView(generics.ListAPIView):
     queryset = Reimbursement.objects.all().order_by('-created_at')
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
     serializer_class = ReimbursementSerializers
+
+class DeleteReimburseByIdView(generics.DestroyAPIView):
+    queryset = Reimbursement.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReimbursementSerializers
+
+class GetReimburseByIdView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated] 
+    serializer_class = ReimbursementSerializers
+    def get_queryset(self):
+        reimburse_id = self.kwargs['pk']
+        return Reimbursement.objects.filter(id=reimburse_id)
 
 class GetReimburseUserView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
@@ -64,6 +92,16 @@ class GetReimburseUserView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Reimbursement.objects.filter(user=user).order_by('-created_at')
+    
+class GetReimburseThisMonthView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = ReimbursementSerializers
+    def get_queryset(self):
+        now = datetime.now()
+        return Reimbursement.objects.filter(
+            created_at__year=now.year,
+            created_at__month=now.month
+        ).order_by('-created_at')
 
 class CreateReimburseView(generics.CreateAPIView):
     queryset = Reimbursement.objects.all()
