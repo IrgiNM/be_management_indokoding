@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .helpers import UserCheckRole
 from datetime import datetime
+from django.utils import timezone
 
 
 # USER
@@ -101,6 +102,28 @@ class GetReimburseThisMonthView(generics.ListAPIView):
         return Reimbursement.objects.filter(
             created_at__year=now.year,
             created_at__month=now.month
+        ).order_by('-created_at')
+    
+class GetReimburseThisYearView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = ReimbursementSerializers
+    def get_queryset(self):
+        now = datetime.now()
+        return Reimbursement.objects.filter(
+            created_at__year=now.year,
+        ).order_by('-created_at')
+    
+class GetReimburseThisYearViewPerUser(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = ReimbursementSerializers
+    def get_queryset(self):
+        now = timezone.now()
+        email = self.kwargs.get('email')
+        if not email:
+            return Reimbursement.objects.none()
+        return Reimbursement.objects.filter(
+            created_at__year=now.year,
+            user__email=email
         ).order_by('-created_at')
 
 class CreateReimburseView(generics.CreateAPIView):
