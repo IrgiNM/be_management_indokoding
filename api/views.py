@@ -35,12 +35,41 @@ class GetUserAllView(generics.ListAPIView):
         queryset = self.get_queryset()
         serializer = UserSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+class GetUserByEmail(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = UserSerializer
+    lookup_field = 'email'
+
+    def get_queryset(self):
+        return User.objects.all()
+    
+class DeleteAllUserByEmail(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, *args, **kwargs):
+        email = kwargs.get('email')
+
+        users = User.objects.filter(email=email)
+        count = users.count()
+
+        if count == 0:
+            return Response({"message": "Tidak ada user dengan email tersebut."}, status=404)
+
+        users.delete()
+        return Response({"message": f"{count} user berhasil dihapus."})
 
 class GetUserIdView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     def get_object(self):
         return self.request.user # biar bisa ngambil dari header yang dikirim
+    
+class UpdateUserView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    lookup_field = "email"
 
 
 # CATEGORY
@@ -90,9 +119,24 @@ class GetReimburseByIdView(generics.RetrieveAPIView):
 class GetReimburseUserView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
     serializer_class = ReimbursementSerializers
+
     def get_queryset(self):
         user = self.request.user
-        return Reimbursement.objects.filter(user=user).order_by('-created_at')
+        
+        # Ambil param optional dari query string
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+
+        queryset = Reimbursement.objects.filter(user=user)
+
+        # Filter jika param diberikan
+        if year:
+            queryset = queryset.filter(created_at__year=year)
+        if month:
+            queryset = queryset.filter(created_at__month=month)
+
+        return queryset.order_by('-created_at')
+
     
 class GetReimburseThisMonthView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
@@ -135,7 +179,7 @@ class CreateReimburseView(generics.CreateAPIView):
 
 class UpdateReimburseView(generics.UpdateAPIView):
     queryset = Reimbursement.objects.all()
-    permission_classes = (AllowAny,) 
+    permission_classes = [IsAuthenticated]
     serializer_class = ReimbursementSerializers
 
 class ReimbursementListView(generics.ListAPIView):

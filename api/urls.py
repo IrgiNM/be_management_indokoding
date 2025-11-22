@@ -9,6 +9,9 @@ urlpatterns = [
     path('login/', obtain_auth_token, name='api_login'),
     path('user/create', RegisterView.as_view(), name='api_create_user'),
     path('users/', GetUserAllView.as_view(), name='api_get_all_user'),
+    path('user/<str:email>/', GetUserByEmail.as_view(), name='api_get_user_by_email'),
+    path('user/delete/<str:email>/', DeleteAllUserByEmail.as_view(), name='api_delete_user_by_email'),
+    path('user/update/<str:email>/', UpdateUserView.as_view(), name='api_update_user_by_email'),
     path('user/me', GetUserIdView.as_view(), name='api_get_id_user'),
 
     path('category/create/', CreateCategoryView.as_view(), name='api_create_category'),
