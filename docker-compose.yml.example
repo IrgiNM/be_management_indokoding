@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: be_expo
+    build: .
+    volumes:
+      - ./media/:/app/media
+      - ./static/:/app/static
+      - ./logs/:/app/logs
+    ports:
+      - 8001:8000
