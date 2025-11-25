@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:16-alpine # Use a lightweight PostgreSQL image
+    container_name: django_postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/ # Persistent volume for data
+    environment:
+      POSTGRES_DB: reimburse-db
+      POSTGRES_USER: reimburse-user
+      POSTGRES_PASSWORD: Secret123!
+    ports:
+      - "54321:5432"
   web:
     container_name: be_expo
     build: .
@@ -9,4 +20,6 @@ services:
       - ./static/:/app/static
       - ./logs/:/app/logs
     ports:
-      - 8001:8000
+      - 9005:8000
+volumes:
+  postgres_data:
