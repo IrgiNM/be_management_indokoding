@@ -22,10 +22,25 @@ class UserSerializer(serializers.ModelSerializer):
         )
         return user
     
+    def update(self, instance, validated_data):
+        # Update username / email / is_staff
+        for attr, value in validated_data.items():
+            if attr == 'password':
+                # pakai set_password agar di-hash
+                instance.set_password(value)
+            else:
+                setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
     def validate(self, data):
         emailData = data.get('email')
-        if User.objects.filter(email=emailData).exists():
-            raise serializers.ValidationError("email udah ada")
+        if emailData:
+            # Pastikan email unik, tetapi abaikan dirinya sendiri saat update
+            user_id = self.instance.id if self.instance else None
+            if User.objects.filter(email=emailData).exclude(id=user_id).exists():
+                raise serializers.ValidationError("email udah ada")
         return data
     
     # def validate_username(self, value):
@@ -68,19 +83,6 @@ class CategorySerializers(serializers.ModelSerializer):
             return Category.objects.get(name=nameData)
         return data
 
-# class CategorySerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Category
-#         fields = ['id', 'name', 'created_at']
-
-#     def create(self, validated_data):
-#         category, created = Category.objects.get_or_create(
-#             name=validated_data.get('name')
-#         )
-#         return category
-
-
-
 class ReimbursementItemSerializers(serializers.ModelSerializer):
     reimbursement_detail = ReimbursementSerializers(source='reimbursement', read_only=True)
     category_detail = CategorySerializers(source='category', read_only=True)
@@ -98,6 +100,25 @@ class ReimbursementItemSerializers(serializers.ModelSerializer):
             'updated_at'
         ]
     
+class FinanceManagementSerializers(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+    class Meta:
+        model = FinanceManagement
+        fields = (
+            'id',
+            'user',
+            'user_detail',
+            'base_salary',
+            'spouse_allowance',
+            'child_allowance',
+            'bpjs_health_percentage',
+            'bpjs_employment_percentage',
+            'tax_amount',
+            'overtime_hours',
+            'receivable_amount',
+            'created_at',
+            'updated_at',
+        )
 
 
     

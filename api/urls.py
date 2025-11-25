@@ -23,6 +23,7 @@ urlpatterns = [
     path('reimbursements/thisMonth/', GetReimburseThisMonthView.as_view(), name='api_this_month_reimbursement'),
     path('reimbursements/thisYear/', GetReimburseThisYearView.as_view(), name='api_this_year_reimbursement'),
     path('reimbursements/thisYear/<str:email>/', GetReimburseThisYearViewPerUser.as_view(), name='api_this_year_reimbursement_per_user'),
+    path('reimbursements/thisMonth/<str:email>/', GetReimburseByEmailThisMonthView.as_view(), name='api_this_month_reimbursement_per_user_email'),
     path('reimbursements/create/', CreateReimburseView.as_view(), name='api_create_reimbursement'),
     path('reimbursements/update/<int:pk>', UpdateReimburseView.as_view(), name='api_update_reimbursement'),
     path('reimbursements/delete/<int:pk>', DeleteReimburseByIdView.as_view(), name='api_delete_reimbursement'),
@@ -30,5 +31,8 @@ urlpatterns = [
     path('items/', GetReimburseItemView.as_view(), name='api_reimburse_item_list'),
     path('item/create', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),
     path('item/<int:reimburse_id>', GetReimburseItemByIdView.as_view(), name='api_reimburse_item_list_by_id'),
+
+    path('finance/create-or-update/', CreateOrUpdateFinanceManagementView.as_view(), name='finance-create-or-update'),
+    path('finance/user/<str:email>/', GetFinanceManagementByUserView.as_view(), name='get-finance-user'),
 ]
 

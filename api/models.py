@@ -25,10 +25,25 @@ class Category(models.Model):
 class ReimbursementItems(models.Model):
     reimbursement = models.ForeignKey(Reimbursement, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-
     item_amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.category.name} = Rp.{self.item_amount}"
+    
+class FinanceManagement(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    base_salary = models.DecimalField(max_digits=12, decimal_places=2)  # Gaji pokok
+    spouse_allowance = models.IntegerField(default=0)  # Tunjangan istri
+    child_allowance = models.IntegerField(default=0)   # Tunjangan anak
+    bpjs_health_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)   # BPJS Kesehatan (%)
+    bpjs_employment_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # BPJS Ketenagakerjaan (%)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Pajak (%)
+    overtime_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Overtime hours
+    receivable_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Piutang (Receivable)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Finance data for {self.user.username}"

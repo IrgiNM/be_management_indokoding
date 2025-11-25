@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from api.serializers import *
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from .helpers import UserCheckRole
 from datetime import datetime
@@ -99,6 +100,20 @@ class CreateCategoryView(generics.CreateAPIView):
 
 
 # REIMBURSE
+class GetReimburseByEmailThisMonthView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = ReimbursementSerializers
+    lookup_field = 'email'
+    def get_queryset(self):
+        email = self.kwargs.get('email')
+        now = datetime.now()
+        queryset = Reimbursement.objects.filter(
+            user__email=email,
+            created_at__year=now.year,
+            created_at__month=now.month
+        )
+        return queryset
+    
 class GetReimburseAllView(generics.ListAPIView):
     queryset = Reimbursement.objects.all().order_by('-created_at')
     permission_classes = [IsAuthenticated]
@@ -174,6 +189,7 @@ class CreateReimburseView(generics.CreateAPIView):
     queryset = Reimbursement.objects.all()
     permission_classes = [permissions.IsAuthenticated] 
     serializer_class = ReimbursementSerializers
+    parser_classes = (MultiPartParser, FormParser)
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -209,3 +225,67 @@ class GetReimburseItemByIdView(generics.ListAPIView):
     def get_queryset(self):
         reimburse_id = self.kwargs['reimburse_id']
         return ReimbursementItems.objects.filter(reimbursement=reimburse_id)
+
+
+# FINANCE MANAGEMENT
+class GetFinanceManagementByUserView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = FinanceManagementSerializers
+    lookup_field = 'email'
+    def get_object(self):
+        email = self.kwargs.get('email')
+        now = datetime.now()
+        queryset = FinanceManagement.objects.filter(
+            user__email=email,
+            created_at__year=now.year,
+            created_at__month=now.month
+        ).first()
+        return queryset
+    
+class CreateOrUpdateFinanceManagementView(generics.CreateAPIView):
+    queryset = FinanceManagement.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = FinanceManagementSerializers
+
+    def create(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        now = datetime.now()
+        if not email:
+            return Response(
+                {'error': 'Field "email" wajib diisi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # cari user
+        existing_user = User.objects.filter(email=email).first()
+        if not existing_user:
+            return Response(
+                {"error": "User tidak ditemukan"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        # cari data finance bulan ini
+        existing_finance = FinanceManagement.objects.filter(
+            user=existing_user,
+            created_at__year=now.year,
+            created_at__month=now.month
+        ).first()
+        # UPDATE
+        if existing_finance:
+            serializer = self.get_serializer(
+                existing_finance,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        # CREATE
+        data = request.data.copy()
+        data["user"] = existing_user.id  # wajib! supaya tidak null
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
