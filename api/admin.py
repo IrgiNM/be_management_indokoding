@@ -1,11 +1,12 @@
 import csv
 import decimal
+import datetime
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from openpyxl import Workbook
 
 from .models import (
-    Reimbursement, Category, ReimbursementItems, FinanceManagement
+    Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip
 )
 
 
@@ -203,3 +204,47 @@ class FinanceManagementAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at'),
         }),
     )
+
+@admin.register(SalarySlip)
+class SalarySlipAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "month",
+        "year",
+        "gross_salary",
+        "net_salary",
+        "created_at",
+    )
+    list_filter = ("year", "month", "user")
+    search_fields = ("user__username",)
+
+    actions = ["generate_monthly_slip"]
+
+    def generate_monthly_slip(self, request, queryset):
+        """
+        Membuat slip gaji untuk seluruh karyawan pada bulan & tahun tertentu.
+        """
+        now = datetime.datetime.now()
+        year = request.GET.get("year", now.year)
+        month = request.GET.get("month", now.month)
+
+        employees = FinanceManagement.objects.select_related("user")
+
+        created = 0
+        skipped = 0
+
+        for finance in employees:
+            obj, created_flag = SalarySlip.objects.get_or_create(
+                user=finance.user,
+                finance=finance,
+                year=year,
+                month=month,
+            )
+            if created_flag:
+                created += 1
+            else:
+                skipped += 1
+
+        self.message_user(request, f"{created} slip dibuat, {skipped} dilewati (sudah ada).")
+
+    generate_monthly_slip.short_description = "Generate Slip Gaji Bulanan"
