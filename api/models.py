@@ -152,17 +152,14 @@ class ReimbursementItems(models.Model):
         return f"{self.category.name} = Rp.{self.item_amount}"
     
 class FinanceManagement(models.Model):
+    is_active = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2)  # Gaji pokok
     spouse_allowance = models.IntegerField(default=0)  # Tunjangan istri
     child_allowance = models.IntegerField(default=0)   # Tunjangan anak
-    bpjs_health_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)   # BPJS Kesehatan (%)
-    bpjs_employment_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # BPJS Ketenagakerjaan (%)
-    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Pajak (%)
-    overtime_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Overtime hours
-    receivable_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Piutang (Receivable)
-    net_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    enable_bpjs_health = models.BooleanField(default=False)
+    enable_bpjs_employment = models.BooleanField(default=False)
+    enable_tax = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -171,30 +168,14 @@ class FinanceManagement(models.Model):
 
     def save(self, *args, **kwargs):
         # Overtime pay
-        overtime_rate = self.base_salary / Decimal(173)
-        overtime_pay = self.overtime_hours * overtime_rate
-
-        # Gross salary
-        gross = (
-                self.base_salary +
-                Decimal(self.spouse_allowance) +
-                Decimal(self.child_allowance) +
-                overtime_pay
-        )
-        self.gross_salary = gross
-
-        # BPJS
-        bpjs_health = gross * (Decimal(self.bpjs_health_percentage) / Decimal(100))
-        bpjs_employment = gross * (Decimal(self.bpjs_employment_percentage) / Decimal(100))
-
-        # Tax
-        tax = gross * (self.tax_amount / Decimal(100))
-
-        # Net Salary
-        net = gross - (bpjs_health + bpjs_employment + tax) - self.receivable_amount
-        self.net_salary = net
+        if self.is_active:
+            FinanceManagement.objects.filter(
+                user=self.user,
+                is_active=True
+            ).exclude(id=self.id).update(is_active=False)
 
         super().save(*args, **kwargs)
+
 
 
 class SalarySlip(models.Model):

@@ -231,13 +231,12 @@ class ReimbursementItemsAdmin(admin.ModelAdmin):
 class FinanceManagementAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'user', 'base_salary', 'spouse_allowance', 'child_allowance',
-        'bpjs_health_percentage', 'bpjs_employment_percentage',
-        'tax_amount', 'overtime_hours', 'receivable_amount', 'created_at'
+        'enable_bpjs_health', 'enable_bpjs_employment', 'enable_tax', 'created_at'
     )
     list_filter = ('created_at', 'user')
     search_fields = ('user__username',)
     autocomplete_fields = ['user']
-    readonly_fields = ('created_at', 'updated_at', 'gross_salary', 'net_salary')
+    readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = (
         ("User Info", {'fields': ('user',)}),
@@ -245,13 +244,10 @@ class FinanceManagementAdmin(admin.ModelAdmin):
             'fields': ('base_salary', 'spouse_allowance', 'child_allowance'),
         }),
         ("BPJS Deductions", {
-            'fields': ('bpjs_health_percentage', 'bpjs_employment_percentage'),
+            'fields': ('enable_bpjs_health', 'enable_bpjs_employment'),
         }),
         ("Other Financial Info", {
-            'fields': ('tax_amount', 'overtime_hours', 'receivable_amount'),
-        }),
-        ("Salaries", {
-            'fields': ('gross_salary', 'net_salary'),
+            'fields': ('enable_tax',),
         }),
         ("Timestamps", {
             'classes': ('collapse',),
