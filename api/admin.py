@@ -207,23 +207,6 @@ class CategoryAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
-# ============================================================
-# ==================== ITEMS ADMIN ===========================
-# ============================================================
-
-@admin.register(ReimbursementItems)
-class ReimbursementItemsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'reimbursement', 'category', 'item_amount', 'created_at')
-    list_filter = ('category', 'created_at')
-    search_fields = ('reimbursement__title', 'category__name')
-    autocomplete_fields = ['reimbursement', 'category']
-    readonly_fields = ('created_at', 'updated_at')
-
-    def save_model(self, request, obj, form, change):
-        """Update total amount whenever item changes."""
-        super().save_model(request, obj, form, change)
-        update_total_amount(obj.reimbursement)
-
 
 # ============================================================
 # ================= FINANCE MANAGEMENT ADMIN =================
