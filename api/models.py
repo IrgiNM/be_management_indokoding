@@ -66,8 +66,8 @@ class FinanceManagement(models.Model):
         self.gross_salary = gross
 
         # BPJS
-        bpjs_health = gross * (self.bpjs_health_percentage / decimal.Decimal(100))
-        bpjs_employment = gross * (self.bpjs_employment_percentage / decimal.Decimal(100))
+        bpjs_health = gross * (decimal.Decimal(self.bpjs_health_percentage) / decimal.Decimal(100))
+        bpjs_employment = gross * (decimal.Decimal(self.bpjs_employment_percentage) / decimal.Decimal(100))
 
         # Tax
         tax = gross * (self.tax_amount / decimal.Decimal(100))
