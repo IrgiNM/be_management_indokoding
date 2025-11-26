@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import decimal
 
 class Reimbursement(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -42,8 +43,37 @@ class FinanceManagement(models.Model):
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Pajak (%)
     overtime_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # Overtime hours
     receivable_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Piutang (Receivable)
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Finance data for {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        # Overtime pay
+        overtime_rate = self.base_salary / decimal.Decimal(173)
+        overtime_pay = self.overtime_hours * overtime_rate
+
+        # Gross salary
+        gross = (
+                self.base_salary +
+                decimal.Decimal(self.spouse_allowance) +
+                decimal.Decimal(self.child_allowance) +
+                overtime_pay
+        )
+        self.gross_salary = gross
+
+        # BPJS
+        bpjs_health = gross * (self.bpjs_health_percentage / decimal.Decimal(100))
+        bpjs_employment = gross * (self.bpjs_employment_percentage / decimal.Decimal(100))
+
+        # Tax
+        tax = gross * (self.tax_amount / decimal.Decimal(100))
+
+        # Net Salary
+        net = gross - (bpjs_health + bpjs_employment + tax) - self.receivable_amount
+        self.net_salary = net
+
+        super().save(*args, **kwargs)
