@@ -20,7 +20,7 @@ class Command(BaseCommand):
         months_back = options["months"]
         now = datetime.now()
 
-        employees = FinanceManagement.objects.select_related("user")
+        employees = FinanceManagement.objects.filter(is_active=True).select_related("user")
 
         if not employees:
             self.stdout.write(self.style.ERROR("No FinanceManagement data found!"))

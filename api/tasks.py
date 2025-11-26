@@ -13,7 +13,7 @@ def auto_generate_salary_slips():
     year = now.year
     month = now.month
 
-    employees = FinanceManagement.objects.select_related("user")
+    employees = FinanceManagement.objects.filter(is_active=True).select_related("user")
 
     created = 0
     skipped = 0

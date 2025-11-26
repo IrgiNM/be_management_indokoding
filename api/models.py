@@ -1,5 +1,6 @@
+from datetime import timedelta
 from decimal import Decimal
-
+from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -159,7 +160,10 @@ class FinanceManagement(models.Model):
     child_allowance = models.IntegerField(default=0)   # Tunjangan anak
     enable_bpjs_health = models.BooleanField(default=False)
     enable_bpjs_employment = models.BooleanField(default=False)
+    bpjs_health_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=1)  # BPJS Kesehatan (%)
+    bpjs_employment_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=2)  # BPJS Ketenagakerjaan (%)
     enable_tax = models.BooleanField(default=False)
+    tax_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=1)  # Tax rate (%)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -177,6 +181,55 @@ class FinanceManagement(models.Model):
         super().save(*args, **kwargs)
 
 
+class OvertimeLog(models.Model):
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    duration_hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    description = models.TextField(blank=True, null=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
+        verbose_name = "Overtime Log"
+        verbose_name_plural = "Overtime Logs"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} ({self.duration_hours} hours)"
+
+    def calculate_duration(self):
+        """Calculate duration in hours based on start_time and end_time."""
+        start = timedelta(
+            hours=self.start_time.hour,
+            minutes=self.start_time.minute,
+            seconds=self.start_time.second,
+        )
+        end = timedelta(
+            hours=self.end_time.hour,
+            minutes=self.end_time.minute,
+            seconds=self.end_time.second,
+        )
+        duration = (end - start).total_seconds() / 3600
+
+        return max(duration, 0)  # avoid negative values
+
+    def save(self, *args, **kwargs):
+        # Auto-calc duration on save
+        self.duration_hours = Decimal(str(self.calculate_duration()))
+        super().save(*args, **kwargs)
 
 class SalarySlip(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -209,10 +262,27 @@ class SalarySlip(models.Model):
         child = Decimal(self.finance.child_allowance)
         gross = base + spouse + child
 
-        bpjs_health = gross * (Decimal(self.finance.bpjs_health_percentage) / Decimal("100"))
-        bpjs_employment = gross * (Decimal(self.finance.bpjs_employment_percentage) / Decimal("100"))
-        tax = gross * (Decimal(self.finance.tax_amount) / Decimal("100"))
-        overtime_pay = Decimal(self.finance.overtime_hours) * Decimal("20000")
+        bpjs_health = Decimal("0")
+        if self.finance.enable_bpjs_health:
+            bpjs_health = gross * (Decimal(self.finance.bpjs_health_rate_percentage) / Decimal("100"))
+
+        bpjs_employment = Decimal("0")
+        if self.finance.enable_bpjs_employment:
+            bpjs_employment = gross * (Decimal(self.finance.bpjs_employment_rate_percentage) / Decimal("100"))
+
+        tax = Decimal("0")
+        if self.finance.enable_tax:
+            tax = gross * (Decimal(self.finance.tax_rate_percentage) / Decimal("100"))
+
+        overtime_hours = OvertimeLog.objects.filter(
+                status="approved",
+                date__year=self.year,
+                date__month=self.month,
+                user=self.user
+            ).aggregate(total_hours=Sum("duration_hours")).get("total_hours") or 0
+
+        overtime_rate = self.finance.base_salary / Decimal(173)  # 173 adalah rata-rata jumlah jam kerja bulanan
+        overtime_pay = Decimal(overtime_hours) * overtime_rate
 
         net = gross + overtime_pay - (bpjs_health + bpjs_employment + tax)
 

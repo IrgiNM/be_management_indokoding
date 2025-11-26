@@ -7,8 +7,10 @@ from django.http import HttpResponse
 from openpyxl import Workbook
 
 from .models import (
-    Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting
+    Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting,
+    OvertimeLog
 )
+
 
 @admin.register(SiteSetting)
 class SiteSettingAdmin(admin.ModelAdmin):
@@ -230,8 +232,9 @@ class ReimbursementItemsAdmin(admin.ModelAdmin):
 @admin.register(FinanceManagement)
 class FinanceManagementAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'user', 'base_salary', 'spouse_allowance', 'child_allowance',
-        'enable_bpjs_health', 'enable_bpjs_employment', 'enable_tax', 'created_at'
+        'id', 'is_active', 'user', 'base_salary', 'spouse_allowance', 'child_allowance', 'enable_bpjs_health',
+        'bpjs_health_rate_percentage', 'enable_bpjs_employment', 'bpjs_employment_rate_percentage', 'enable_tax',
+        'tax_rate_percentage', 'created_at'
     )
     list_filter = ('created_at', 'user')
     search_fields = ('user__username',)
@@ -239,21 +242,75 @@ class FinanceManagementAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = (
-        ("User Info", {'fields': ('user',)}),
+        ("User Info", {'fields': ('is_active', 'user',)}),
         ("Salary & Allowances", {
             'fields': ('base_salary', 'spouse_allowance', 'child_allowance'),
         }),
         ("BPJS Deductions", {
-            'fields': ('enable_bpjs_health', 'enable_bpjs_employment'),
+            'fields': ('enable_bpjs_health', 'bpjs_health_rate_percentage', 'enable_bpjs_employment', 'bpjs_employment_rate_percentage'),
         }),
         ("Other Financial Info", {
-            'fields': ('enable_tax',),
+            'fields': ('enable_tax', 'tax_rate_percentage'),
         }),
         ("Timestamps", {
             'classes': ('collapse',),
             'fields': ('created_at', 'updated_at'),
         }),
     )
+
+
+@admin.register(OvertimeLog)
+class OvertimeLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "date",
+        "start_time",
+        "end_time",
+        "duration_hours",
+        "status",
+        "created_at",
+    )
+    list_filter = ("status", "date", "user")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "description")
+    readonly_fields = ("duration_hours", "created_at", "updated_at")
+    ordering = ("-date", "-created_at")
+
+    fieldsets = (
+        ("Employee", {
+            "fields": ("user",)
+        }),
+        ("Overtime Details", {
+            "fields": (
+                "date",
+                "start_time",
+                "end_time",
+                "duration_hours",
+                "description",
+            )
+        }),
+        ("Workflow", {
+            "fields": ("status",)
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+    # ACTIONS
+    actions = ["approve_logs", "reject_logs"]
+
+    def approve_logs(self, request, queryset):
+        updated = queryset.update(status="approved")
+        self.message_user(request, f"{updated} overtime logs approved.")
+
+    approve_logs.short_description = "Approve selected overtime logs"
+
+    def reject_logs(self, request, queryset):
+        updated = queryset.update(status="rejected")
+        self.message_user(request, f"{updated} overtime logs rejected.")
+
+    reject_logs.short_description = "Reject selected overtime logs"
+
 
 @admin.register(SalarySlip)
 class SalarySlipAdmin(admin.ModelAdmin):
