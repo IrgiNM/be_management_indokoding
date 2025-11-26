@@ -1,14 +1,68 @@
 import csv
-import decimal
 import datetime
+import decimal
+
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from openpyxl import Workbook
 
 from .models import (
-    Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip
+    Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting
 )
 
+@admin.register(SiteSetting)
+class SiteSettingAdmin(admin.ModelAdmin):
+    list_display = ("category", "key", "value", "updated_at")
+    list_filter = ("category",)
+    search_fields = ("category", "key", "value")
+    ordering = ("category", "key")
+
+class BankAccountInline(admin.TabularInline):
+    model = BankAccount
+    extra = 1
+    fields = (
+        "bank_name",
+        "account_number",
+        "account_holder",
+        "is_primary",
+    )
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = (
+        "employee_id",
+        "full_name",
+        "department",
+        "position",
+        "employment_status",
+        "join_date",
+    )
+    list_filter = ("department", "employment_status", "gender")
+    search_fields = ("employee_id", "full_name", "user__username")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("full_name",)
+
+    inlines = [BankAccountInline]
+
+    fieldsets = (
+        ("Account", {
+            "fields": ("user", "employee_id")
+        }),
+        ("Personal Info", {
+            "fields": ("full_name", "gender", "birth_date", "address", "phone_number", "email", "identity_number", "tax_number")
+        }),
+        ("Job Info", {
+            "fields": ("department", "position", "employment_status", "join_date", "resign_date")
+        }),
+        ("Emergency Contact", {
+            "fields": ("emergency_name", "emergency_phone", "emergency_relation")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
 
 # ============================================================
 # ===============  DASHBOARD CUSTOM ADMIN SITE  ===============

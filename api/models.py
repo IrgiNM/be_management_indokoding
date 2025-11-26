@@ -4,6 +4,122 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class SiteSetting(models.Model):
+    category = models.CharField(max_length=100)
+    key = models.CharField(max_length=100)
+    value = models.TextField(blank=True, null=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("category", "key")
+        verbose_name = "Site Setting"
+        verbose_name_plural = "Site Settings"
+        ordering = ("category", "key")
+
+    def __str__(self):
+        return f"{self.category} - {self.key}"
+
+
+class Employee(models.Model):
+    EMPLOYMENT_STATUS = (
+        ("active", "Active"),
+        ("resigned", "Resigned"),
+        ("terminated", "Terminated"),
+        ("probation", "Probation"),
+    )
+
+    GENDER_CHOICES = (
+        ("male", "Male"),
+        ("female", "Female"),
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employee_profile")
+
+    employee_id = models.CharField(max_length=20, unique=True)
+
+    # Personal Information
+    full_name = models.CharField(max_length=150)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    birth_date = models.DateField(null=True, blank=True)
+    tax_number = models.CharField(max_length=30, null=True, blank=True)
+    identity_number = models.CharField(max_length=30, null=True, blank=True)
+
+    # Contact
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+
+    # Job Information
+    position = models.CharField(max_length=100)
+    department = models.CharField(max_length=100)
+    join_date = models.DateField()
+    resign_date = models.DateField(null=True, blank=True)
+
+    employment_status = models.CharField(max_length=20, choices=EMPLOYMENT_STATUS, default="active")
+
+    # Emergency Contact
+    emergency_name = models.CharField(max_length=150, null=True, blank=True)
+    emergency_phone = models.CharField(max_length=20, null=True, blank=True)
+    emergency_relation = models.CharField(max_length=50, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["full_name"]
+        verbose_name = "Employee"
+        verbose_name_plural = "Employees"
+
+    def __str__(self):
+        return f"{self.full_name} ({self.employee_id})"
+
+    # Helper Methods
+    def is_active(self):
+        return self.employment_status == "active"
+
+
+class BankAccount(models.Model):
+    BANK_CHOICES = [
+        ("BCA", "Bank Central Asia (BCA)"),
+        ("BNI", "Bank Negara Indonesia (BNI)"),
+        ("BRI", "Bank Rakyat Indonesia (BRI)"),
+        ("MANDIRI", "Bank Mandiri"),
+        ("CIMB", "CIMB Niaga"),
+        ("BTN", "Bank Tabungan Negara (BTN)"),
+        ("DANAMON", "Bank Danamon"),
+        ("PERMATA", "Bank Permata"),
+        ("OTHER", "Bank Lainnya"),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="bank_accounts")
+
+    bank_name = models.CharField(max_length=50, choices=BANK_CHOICES)
+    account_number = models.CharField(max_length=50)
+    account_holder = models.CharField(max_length=150)
+
+    is_primary = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Bank Account"
+        verbose_name_plural = "Bank Accounts"
+        ordering = ["employee", "-is_primary"]
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.bank_name} ({self.account_number})"
+
+    def save(self, *args, **kwargs):
+        # pastikan hanya 1 rekening utama
+        if self.is_primary:
+            BankAccount.objects.filter(
+                employee=self.employee, is_primary=True
+            ).update(is_primary=False)
+
+        super().save(*args, **kwargs)
+
 class Reimbursement(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 

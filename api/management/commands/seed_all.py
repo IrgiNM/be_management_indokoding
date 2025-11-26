@@ -7,7 +7,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.stdout.write(self.style.WARNING("=== Running Full Seeder ==="))
-
+        call_command("seed_site_settings")
         call_command("seed_users")
         call_command("seed_categories")
         call_command("seed_reimbursements")
