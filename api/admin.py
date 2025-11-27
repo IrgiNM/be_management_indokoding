@@ -5,6 +5,8 @@ import decimal
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from openpyxl import Workbook
+from unfold.admin import ModelAdmin
+from unfold.admin import TabularInline
 
 from .models import (
     Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting,
@@ -13,13 +15,14 @@ from .models import (
 
 
 @admin.register(SiteSetting)
-class SiteSettingAdmin(admin.ModelAdmin):
+class SiteSettingAdmin(ModelAdmin):
     list_display = ("category", "key", "value", "updated_at")
     list_filter = ("category",)
     search_fields = ("category", "key", "value")
     ordering = ("category", "key")
 
-class BankAccountInline(admin.TabularInline):
+
+class BankAccountInline(TabularInline):
     model = BankAccount
     extra = 1
     fields = (
@@ -32,7 +35,7 @@ class BankAccountInline(admin.TabularInline):
 
 
 @admin.register(Employee)
-class EmployeeAdmin(admin.ModelAdmin):
+class EmployeeAdmin(ModelAdmin):
     list_display = (
         "employee_id",
         "full_name",
@@ -93,7 +96,7 @@ finance_admin_site = FinanceAdminSite(name="finance_admin")
 # ===================== INLINE ITEMS =========================
 # ============================================================
 
-class ReimbursementItemsInline(admin.TabularInline):
+class ReimbursementItemsInline(TabularInline):
     model = ReimbursementItems
     extra = 1
     autocomplete_fields = ['category']
@@ -154,7 +157,7 @@ export_as_excel.short_description = "Export Excel"
 # ============================================================
 
 @admin.register(Reimbursement)
-class ReimbursementAdmin(admin.ModelAdmin):
+class ReimbursementAdmin(ModelAdmin):
     list_display = ('id', 'user', 'title', 'total_amount', 'status', 'created_at')
     list_filter = ('status', 'created_at', 'user')
     search_fields = ('title', 'user__username')
@@ -201,7 +204,7 @@ class ReimbursementAdmin(admin.ModelAdmin):
 # ============================================================
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
     list_display = ('id', 'name', 'created_at')
     search_fields = ('name',)
     readonly_fields = ('created_at',)
@@ -213,7 +216,7 @@ class CategoryAdmin(admin.ModelAdmin):
 # ============================================================
 
 @admin.register(FinanceManagement)
-class FinanceManagementAdmin(admin.ModelAdmin):
+class FinanceManagementAdmin(ModelAdmin):
     list_display = (
         'id', 'is_active', 'user', 'base_salary', 'spouse_allowance', 'child_allowance', 'enable_bpjs_health',
         'bpjs_health_rate_percentage', 'enable_bpjs_employment', 'bpjs_employment_rate_percentage', 'enable_tax',
@@ -243,7 +246,7 @@ class FinanceManagementAdmin(admin.ModelAdmin):
 
 
 @admin.register(OvertimeLog)
-class OvertimeLogAdmin(admin.ModelAdmin):
+class OvertimeLogAdmin(ModelAdmin):
     list_display = (
         "user",
         "date",
@@ -296,7 +299,7 @@ class OvertimeLogAdmin(admin.ModelAdmin):
 
 
 @admin.register(SalarySlip)
-class SalarySlipAdmin(admin.ModelAdmin):
+class SalarySlipAdmin(ModelAdmin):
     list_display = (
         "user",
         "month",
