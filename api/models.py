@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 from django.db.models import Sum
 from django.contrib.auth.models import User
@@ -198,6 +198,7 @@ class OvertimeLog(models.Model):
     description = models.TextField(blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    paid_date= models.DateField(blank=True, null=True, default=None)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -230,6 +231,12 @@ class OvertimeLog(models.Model):
         # Auto-calc duration on save
         self.duration_hours = Decimal(str(self.calculate_duration()))
         super().save(*args, **kwargs)
+
+class UserOvertimeLog(OvertimeLog):
+    class Meta:
+        proxy = True
+        verbose_name = "User Overtime Log"
+        verbose_name_plural = "User Overtime Logs"
 
 class SalarySlip(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -276,8 +283,8 @@ class SalarySlip(models.Model):
 
         overtime_hours = OvertimeLog.objects.filter(
                 status="approved",
-                date__year=self.year,
-                date__month=self.month,
+                paid_date__year=self.year,
+                paid_date__month=self.month,
                 user=self.user
             ).aggregate(total_hours=Sum("duration_hours")).get("total_hours") or 0
 

@@ -1,6 +1,6 @@
 import csv
-import datetime
 import decimal
+from datetime import datetime
 
 from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
@@ -14,7 +14,7 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 
 from .models import (
     Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting,
-    OvertimeLog
+    OvertimeLog, UserOvertimeLog
 )
 
 admin.site.unregister(User)
@@ -269,6 +269,7 @@ class OvertimeLogAdmin(ModelAdmin):
     list_display = (
         "user",
         "date",
+        "paid_date",
         "start_time",
         "end_time",
         "duration_hours",
@@ -294,28 +295,81 @@ class OvertimeLogAdmin(ModelAdmin):
             )
         }),
         ("Workflow", {
-            "fields": ("status",)
+            "fields": ("status", "paid_date")
         }),
         ("Timestamps", {
             "fields": ("created_at", "updated_at")
         }),
     )
 
+    def get_readonly_fields(self, request, obj=None):
+        ro_fields = list(self.readonly_fields)
+        # Non-admin cannot change status or paid_date
+        if obj and obj.status == "approved":
+            ro_fields = [f.name for f in obj._meta.fields]
+            if request.user.is_superuser:
+                ro_fields.remove("paid_date")
+            return ro_fields
+
+        return ro_fields
     # ACTIONS
     actions = ["approve_logs", "reject_logs"]
 
     def approve_logs(self, request, queryset):
-        updated = queryset.update(status="approved")
+        updated = queryset.update(status="approved", paid_date=datetime.now())
         self.message_user(request, f"{updated} overtime logs approved.")
 
     approve_logs.short_description = "Approve selected overtime logs"
 
     def reject_logs(self, request, queryset):
-        updated = queryset.update(status="rejected")
+        updated = queryset.update(status="rejected", paid_date=None)
         self.message_user(request, f"{updated} overtime logs rejected.")
 
     reject_logs.short_description = "Reject selected overtime logs"
 
+
+@admin.register(UserOvertimeLog)
+class UserOvertimeLogAdmin(OvertimeLogAdmin):
+    list_filter = ("status", "date")
+    list_display = (
+        "date",
+        "paid_date",
+        "start_time",
+        "end_time",
+        "duration_hours",
+        "status",
+        "created_at",
+    )
+    readonly_fields = ("status", "paid_date", "duration_hours", "created_at", "updated_at")
+
+    fieldsets = (
+        ("Overtime Details", {
+            "fields": (
+                "date",
+                "start_time",
+                "end_time",
+                "duration_hours",
+                "description",
+            )
+        }),
+        ("Workflow", {
+            "fields": ("status", "paid_date")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+    # Make sure logged-in user sees ONLY their own overtime logs
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(user=request.user)
+
+    # Automatically assign the logged-in user on save
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # Only set user for new records
+            obj.user = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(SalarySlip)
 class SalarySlipAdmin(ModelAdmin):
@@ -330,13 +384,52 @@ class SalarySlipAdmin(ModelAdmin):
     list_filter = ("year", "month", "user")
     search_fields = ("user__username",)
 
+    readonly_fields = (
+        "finance",
+        "user",
+        "month",
+        "year",
+        "gross_salary",
+        "bpjs_health",
+        "bpjs_employment",
+        "tax_amount",
+        "overtime_pay",
+        "net_salary",
+        "created_at"
+    )
+
+    fieldsets = (
+        ("Employee", {
+            "fields": ("user",)
+        }),
+        ("Deductions", {
+            "fields": (
+                "bpjs_health",
+                "bpjs_employment",
+                "tax_amount",
+            )
+        }),
+        ("Additional", {
+            "fields": ("overtime_pay",)
+        }),
+        ("Salaries", {
+            "fields": ("net_salary",)
+        }),
+        ("Timestamps", {
+            "fields": ("month", "year", "created_at")
+        }),
+    )
+
     actions = ["generate_monthly_slip"]
+
+    def has_add_permission(self, request):
+        return False
 
     def generate_monthly_slip(self, request, queryset):
         """
         Membuat slip gaji untuk seluruh karyawan pada bulan & tahun tertentu.
         """
-        now = datetime.datetime.now()
+        now = datetime.now()
         year = request.GET.get("year", now.year)
         month = request.GET.get("month", now.month)
 
