@@ -3,16 +3,35 @@ import datetime
 import decimal
 
 from django.contrib import admin, messages
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from openpyxl import Workbook
 from unfold.admin import ModelAdmin
 from unfold.admin import TabularInline
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 from .models import (
     Reimbursement, Category, ReimbursementItems, FinanceManagement, SalarySlip, Employee, BankAccount, SiteSetting,
     OvertimeLog
 )
 
+admin.site.unregister(User)
+admin.site.unregister(Group)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin, ModelAdmin):
+    # Forms loaded from `unfold.forms`
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+
+
+@admin.register(Group)
+class GroupAdmin(BaseGroupAdmin, ModelAdmin):
+    pass
 
 @admin.register(SiteSetting)
 class SiteSettingAdmin(ModelAdmin):
