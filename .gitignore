@@ -40,5 +40,5 @@ static/uploads/
 init_db/
 
 docker-compose.yml
-Dockerfile
 static/*
+settings.py
