@@ -249,6 +249,7 @@ class SalarySlip(models.Model):
     bpjs_health = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     bpjs_employment = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    reimburse_total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     overtime_pay = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     net_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
@@ -281,6 +282,13 @@ class SalarySlip(models.Model):
         if self.finance.enable_tax:
             tax = gross * (Decimal(self.finance.tax_rate_percentage) / Decimal("100"))
 
+        reimburse_month = Reimbursement.objects.filter(
+                status="Approved",
+                created_at__year=self.year,
+                created_at__month=self.month,
+                user=self.user
+            ).aggregate(total_reimburse_amount=Sum("total_amount")).get("total_reimburse_amount") or 0
+
         overtime_hours = OvertimeLog.objects.filter(
                 status="approved",
                 paid_date__year=self.year,
@@ -291,12 +299,13 @@ class SalarySlip(models.Model):
         overtime_rate = self.finance.base_salary / Decimal(173)  # 173 adalah rata-rata jumlah jam kerja bulanan
         overtime_pay = Decimal(overtime_hours) * overtime_rate
 
-        net = gross + overtime_pay - (bpjs_health + bpjs_employment + tax)
+        net = gross + reimburse_month + overtime_pay - (bpjs_health + bpjs_employment + tax)
 
         self.gross_salary = gross
         self.bpjs_health = bpjs_health
         self.bpjs_employment = bpjs_employment
         self.tax_amount = tax
+        self.reimburse_total_amount = reimburse_month
         self.overtime_pay = overtime_pay
         self.net_salary = net
 
