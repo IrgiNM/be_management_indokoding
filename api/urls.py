@@ -4,6 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from .views import *
 
 urlpatterns = [
+    # USER
     # Ini memberitahu Django, "Jika sisa URL-nya adalah 'login/',
     # jalankan fungsi 'obtain_auth_token'"
     path('login/', obtain_auth_token, name='api_login'),
@@ -14,9 +15,11 @@ urlpatterns = [
     path('user/update/<str:email>/', UpdateUserView.as_view(), name='api_update_user_by_email'),
     path('user/me', GetUserIdView.as_view(), name='api_get_id_user'),
 
+    # CATEGORY
     path('category/create/', CreateCategoryView.as_view(), name='api_create_category'),
     # path('category/create/', CategoryView.as_view(), name='api_create_category'),
 
+    # REIMBURSE
     path('reimbursements/', GetReimburseAllView.as_view(), name='api_reimbursement_list'),
     path('reimbursements/<int:pk>', GetReimburseByIdView.as_view(), name='api_reimbursement_by_id'),
     path('reimbursements/user/', GetReimburseUserView.as_view(), name='api_user_reimbursement'),
@@ -28,11 +31,17 @@ urlpatterns = [
     path('reimbursements/update/<int:pk>', UpdateReimburseView.as_view(), name='api_update_reimbursement'),
     path('reimbursements/delete/<int:pk>', DeleteReimburseByIdView.as_view(), name='api_delete_reimbursement'),
 
+    # REIMBURSE ITEM
     path('items/', GetReimburseItemView.as_view(), name='api_reimburse_item_list'),
     path('item/create', CreateReimburseItemView.as_view(), name='api_create_reimburse_item'),
     path('item/<int:reimburse_id>', GetReimburseItemByIdView.as_view(), name='api_reimburse_item_list_by_id'),
 
+    # FINANCE
     path('finance/create-or-update/', CreateOrUpdateFinanceManagementView.as_view(), name='finance-create-or-update'),
     path('finance/user/<str:email>/', GetFinanceManagementByUserView.as_view(), name='get-finance-user'),
+
+    # SITE SETTING
+    path('setting/create/', CreateSiteSettingView.as_view(), name='create_setting'),
+    path('setting/update/', UpdateSettingView.as_view(), name='update_setting')
 ]
 

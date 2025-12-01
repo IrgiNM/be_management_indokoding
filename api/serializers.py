@@ -104,21 +104,29 @@ class FinanceManagementSerializers(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
     class Meta:
         model = FinanceManagement
-        fields = (
-            'id',
-            'user',
-            'user_detail',
-            'base_salary',
-            'spouse_allowance',
-            'child_allowance',
-            'bpjs_health_percentage',
-            'bpjs_employment_percentage',
-            'tax_amount',
-            'overtime_hours',
-            'receivable_amount',
-            'created_at',
-            'updated_at',
+        fields = '__all__'
+
+class SiteSettingSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = SiteSetting
+        fields = '__all__'
+
+    def validate(self,data):
+        category_data = data.get('category')
+        key_data = data.get('key')
+
+        instance = self.instance
+
+        qs = SiteSetting.objects.filter(
+            category = category_data,
+            key = key_data
         )
 
+        if instance:
+            qs = qs.exclude(id=instance.id)
+        
+        if qs.exists():
+            raise serializers.ValidationError("Setting ini sudah ada (kategori + key harus unik).")
 
+        return data
     

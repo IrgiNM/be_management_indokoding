@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from api.serializers import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -98,7 +99,6 @@ class CreateCategoryView(generics.CreateAPIView):
         return super().create(request, *args, **kwargs)
 
 
-
 # REIMBURSE
 class GetReimburseByEmailThisMonthView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
@@ -152,7 +152,6 @@ class GetReimburseUserView(generics.ListAPIView):
 
         return queryset.order_by('-created_at')
 
-    
 class GetReimburseThisMonthView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
     serializer_class = ReimbursementSerializers
@@ -289,3 +288,29 @@ class CreateOrUpdateFinanceManagementView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+# SITE SETTING
+class CreateSiteSettingView(generics.CreateAPIView):
+    queryset = SiteSetting.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+class UpdateSettingView(generics.UpdateAPIView):
+    queryset = SiteSetting.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+    def get_object(self):
+        data_category = self.request.data.get("category")
+        data_key = self.request.data.get("key")
+
+        if not data_category or not data_key:
+            raise ValidationError("category dan key harus dikirim")
+        
+        try:
+            return SiteSetting.objects.get(
+                category = data_category,
+                key = data_key
+            )
+        except SiteSetting.DoesNotExist:
+            raise ValidationError('data category dan key yang dicari tidak ada')
+        
