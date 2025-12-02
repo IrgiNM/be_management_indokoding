@@ -327,6 +327,28 @@ class OvertimeLogAdmin(ModelAdmin):
 
     reject_logs.short_description = "Reject selected overtime logs"
 
+    def has_delete_permission(self, request, obj=None):
+        # Superuser can delete anything
+        if request.user.is_superuser:
+            return True
+
+        # If editing a specific object
+        if obj:
+            # Prevent deleting approved logs
+            if obj.status == "approved":
+                return False
+
+        # Allow delete for other statuses
+        return True
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        print("ACTIONS : ", actions)
+        # Remove bulk delete action for non-superusers
+        if not request.user.is_superuser:
+            if "delete_selected" in actions:
+                del actions["delete_selected"]
+        return actions
 
 @admin.register(UserOvertimeLog)
 class UserOvertimeLogAdmin(OvertimeLogAdmin):
@@ -342,6 +364,7 @@ class UserOvertimeLogAdmin(OvertimeLogAdmin):
     )
     readonly_fields = ("status", "paid_date", "duration_hours", "created_at", "updated_at")
 
+    actions = []
     fieldsets = (
         ("Overtime Details", {
             "fields": (
