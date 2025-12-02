@@ -41,7 +41,11 @@ urlpatterns = [
     path('finance/user/<str:email>/', GetFinanceManagementByUserView.as_view(), name='get-finance-user'),
 
     # SITE SETTING
+    path('settings/', getSiteSettingsAll.as_view(), name='get_setting_all'),
+    path('settings/<str:category>/', getSiteSettingsByCategory.as_view(), name='get_setting_by_category'),
+    path('settings/<str:category>/<str:key>/', getSiteSettingByCategoryAndKey.as_view(), name='get_setting_by_category_and_key'),
     path('setting/create/', CreateSiteSettingView.as_view(), name='create_setting'),
-    path('setting/update/', UpdateSettingView.as_view(), name='update_setting')
+    path('setting/update/', UpdateSettingView.as_view(), name='update_setting'),
+    path('setting/delete/', DeleteSiteSettingByCategoryAndKeyView.as_view(), name='delete_setting')
 ]
 

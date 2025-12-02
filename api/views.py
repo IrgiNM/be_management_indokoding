@@ -314,3 +314,74 @@ class UpdateSettingView(generics.UpdateAPIView):
         except SiteSetting.DoesNotExist:
             raise ValidationError('data category dan key yang dicari tidak ada')
         
+class DeleteSiteSettingByCategoryAndKeyView(generics.DestroyAPIView):
+    queryset = SiteSetting.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+    def get_object(self):
+        category = self.request.data.get("category")
+        key = self.request.data.get("key")
+
+        if not category or not key:
+            raise ValidationError("category dan key harus dikirim")
+
+        try:
+            return SiteSetting.objects.get(category=category, key=key)
+        except SiteSetting.DoesNotExist:
+            raise ValidationError("data tidak ditemukan")
+        
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"message": "data berhasil dihapus"}, status=200)
+        
+class getSiteSettingsAll(generics.ListAPIView):
+    queryset = SiteSetting.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+class getSiteSettingsByCategory(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+    def get_queryset(self):
+        category = self.kwargs.get("category")
+
+        if not category:
+            raise ValidationError("category harus dikirim")
+        
+        obj = SiteSetting.objects.filter(
+            category = category
+        )
+
+        if not obj.exists():
+            raise ValidationError("data tidak ada")
+
+        return obj
+    
+class getSiteSettingByCategoryAndKey(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SiteSettingSerializers
+
+    def get_object(self):
+        category = self.kwargs.get("category")
+        key = self.kwargs.get("key")
+
+        if not category:
+            raise ValidationError("category harus dikirim")
+        if not key:
+            raise ValidationError("key harus dikirim")
+        
+        obj = SiteSetting.objects.filter(
+            category = category,
+            key = key
+        ).first()
+
+        if not obj:
+            raise ValidationError("data tidak ada")
+
+        return obj
+        
+
+        
