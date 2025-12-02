@@ -38,7 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_results',
+    'django_celery_beat',
     'api',
+    'tools',
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
@@ -155,16 +158,19 @@ STORAGES = {
     },
 }
 
-CELERY_BEAT_SCHEDULE = {
-    "generate-salary-slip-every-month": {
-        "task": "api.tasks.auto_generate_salary_slips",
-        "schedule": {
-            "type": "crontab",
-            "minute": 0,
-            "hour": 0,
-            "day_of_month": 1
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://localhost:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
-    },
+    }
 }
-
 UNFOLD = UNFOLD

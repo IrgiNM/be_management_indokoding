@@ -31,3 +31,9 @@ def auto_generate_salary_slips():
             skipped += 1
 
     return f"Created: {created}, Skipped: {skipped}"
+
+
+@shared_task
+def auto_test_celery():
+    print("test running celery")
+    return f"Test this script running"
