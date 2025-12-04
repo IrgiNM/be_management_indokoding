@@ -42,3 +42,4 @@ init_db/
 docker-compose.yml
 static/*
 settings.py
+\be_expo\settings.py
