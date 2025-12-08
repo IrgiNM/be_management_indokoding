@@ -102,6 +102,7 @@ class ReimbursementItemSerializers(serializers.ModelSerializer):
     
 class FinanceManagementSerializers(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = FinanceManagement
         fields = '__all__'

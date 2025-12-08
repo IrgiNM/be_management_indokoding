@@ -37,7 +37,8 @@ urlpatterns = [
     path('item/<int:reimburse_id>', GetReimburseItemByIdView.as_view(), name='api_reimburse_item_list_by_id'),
 
     # FINANCE
-    path('finance/create-or-update/', CreateOrUpdateFinanceManagementView.as_view(), name='finance-create-or-update'),
+    path('finance/create/', CreateFinanceManagementView.as_view(), name='finance-create'),
+    path('finance/update/', UpdateFinanceManagementView.as_view(), name='finance-update'),
     path('finance/user/<str:email>/', GetFinanceManagementByUserView.as_view(), name='get-finance-user'),
 
     # SITE SETTING

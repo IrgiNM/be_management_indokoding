@@ -12,6 +12,7 @@ from rest_framework import status
 from .helpers import UserCheckRole
 from datetime import datetime
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 
 # USER
@@ -241,51 +242,66 @@ class GetFinanceManagementByUserView(generics.RetrieveAPIView):
         ).first()
         return queryset
     
-class CreateOrUpdateFinanceManagementView(generics.CreateAPIView):
+class CreateFinanceManagementView(generics.CreateAPIView):
     queryset = FinanceManagement.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = [IsAuthenticated]
     serializer_class = FinanceManagementSerializers
 
     def create(self, request, *args, **kwargs):
         email = request.data.get('email')
-        now = datetime.now()
+        enabled_health = request.data.get('enable_bpjs_health') in [True, 'true', '1']
+        enabled_employ = request.data.get('enable_bpjs_employment') in [True, 'true', '1']
+        enabled_tax = request.data.get('enable_tax') in [True, 'true', '1']
+        percentage_health = float(request.data.get('bpjs_health_rate_percentage', 0))
+        percentage_employ = float(request.data.get('bpjs_employment_rate_percentage', 0))
+        percentage_tax = float(request.data.get('tax_rate_percentage', 0))
+
         if not email:
             return Response(
                 {'error': 'Field "email" wajib diisi'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # cari user
-        existing_user = User.objects.filter(email=email).first()
-        if not existing_user:
-            return Response(
-                {"error": "User tidak ditemukan"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        # cari data finance bulan ini
-        existing_finance = FinanceManagement.objects.filter(
-            user=existing_user,
-            created_at__year=now.year,
-            created_at__month=now.month
-        ).first()
-        # UPDATE
-        if existing_finance:
-            serializer = self.get_serializer(
-                existing_finance,
-                data=request.data,
-                partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        # CREATE
-        data = request.data.copy()
-        data["user"] = existing_user.id  # wajib! supaya tidak null
 
-        serializer = self.get_serializer(data=data)
+        # jika BPJS tidak enabled, rate harus 0
+        new_percentage_health = 0 if not enabled_health else percentage_health
+        new_percentage_employ = 0 if not enabled_employ else percentage_employ
+        new_percentage_tax = 0 if not enabled_tax else percentage_tax
+
+        # cari user
+        user = get_object_or_404(User, email=email)
+
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(
+            user=user,
+            bpjs_health_rate_percentage=new_percentage_health,
+            bpjs_employment_rate_percentage=new_percentage_employ,
+            tax_rate_percentage=new_percentage_tax,
+        )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class UpdateFinanceManagementView(generics.UpdateAPIView):
+    queryset = FinanceManagement.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = FinanceManagementSerializers
+
+    def get_object(self):
+        email = self.request.data.get("email")
+
+        if not email:
+            raise ValidationError("email harus dikirim")
+        
+        try:
+            return FinanceManagement.objects.get(
+                user__email = email,
+                is_active = True
+            )
+        except FinanceManagement.DoesNotExist:
+            if User.objects.filter(email=email).exists():
+                raise ValidationError('data tidak ada yang sedang active')
+            else:
+                raise ValidationError('data user yang dicari tidak ada')
 
 
 # SITE SETTING

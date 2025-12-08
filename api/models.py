@@ -163,7 +163,7 @@ class FinanceManagement(models.Model):
     bpjs_health_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=1)  # BPJS Kesehatan (%)
     bpjs_employment_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=2)  # BPJS Ketenagakerjaan (%)
     enable_tax = models.BooleanField(default=False)
-    tax_rate_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=1)  # Tax rate (%)
+    tax_rate_percentage = models.DecimalField(max_digits=12, decimal_places=2, default=1)  # Tax rate (%)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
