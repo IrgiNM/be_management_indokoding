@@ -237,6 +237,7 @@ class GetFinanceManagementByUserView(generics.RetrieveAPIView):
         now = datetime.now()
         queryset = FinanceManagement.objects.filter(
             user__email=email,
+            is_active=True,
             created_at__year=now.year,
             created_at__month=now.month
         ).first()
