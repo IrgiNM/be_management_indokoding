@@ -401,4 +401,47 @@ class getSiteSettingByCategoryAndKey(generics.RetrieveAPIView):
         return obj
         
 
-        
+# SLIP SALARY
+class GetSlipSalaryAllView(generics.ListAPIView):
+    queryset = SalarySlip.objects.all()
+    permission_classes = [IsAuthenticated] 
+    serializer_class = SlipSalarySerializers
+
+class CreateSlipSalaryView(generics.CreateAPIView):
+    queryset = SalarySlip.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = SlipSalarySerializers
+
+    def create(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        enabled_health = request.data.get('enable_bpjs_health') in [True, 'true', '1']
+        enabled_employ = request.data.get('enable_bpjs_employment') in [True, 'true', '1']
+        enabled_tax = request.data.get('enable_tax') in [True, 'true', '1']
+        percentage_health = float(request.data.get('bpjs_health_rate_percentage', 0))
+        percentage_employ = float(request.data.get('bpjs_employment_rate_percentage', 0))
+        percentage_tax = float(request.data.get('tax_rate_percentage', 0))
+
+        if not email:
+            return Response(
+                {'error': 'Field "email" wajib diisi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # jika BPJS tidak enabled, rate harus 0
+        new_percentage_health = 0 if not enabled_health else percentage_health
+        new_percentage_employ = 0 if not enabled_employ else percentage_employ
+        new_percentage_tax = 0 if not enabled_tax else percentage_tax
+
+        # cari user
+        user = get_object_or_404(User, email=email)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            user=user,
+            bpjs_health_rate_percentage=new_percentage_health,
+            bpjs_employment_rate_percentage=new_percentage_employ,
+            tax_rate_percentage=new_percentage_tax,
+        )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

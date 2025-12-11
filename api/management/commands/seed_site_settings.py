@@ -13,6 +13,9 @@ class Command(BaseCommand):
         ("payroll", "bpjs_health_percentage", "1.0"),
         ("payroll", "bpjs_employment_percentage", "2.0"),
         ("payroll", "tax_percentage", "5.0"),
+        ("payroll", "spouse_amount", "200000"),
+        ("payroll", "child_amount", "300000"),
+        ("payroll", "tax_percentage", "5.0"),
 
         ("feature", "enable_notifications", "true"),
         ("feature", "auto_salary_slip", "true"),

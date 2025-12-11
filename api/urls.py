@@ -47,6 +47,9 @@ urlpatterns = [
     path('settings/<str:category>/<str:key>/', getSiteSettingByCategoryAndKey.as_view(), name='get_setting_by_category_and_key'),
     path('setting/create/', CreateSiteSettingView.as_view(), name='create_setting'),
     path('setting/update/', UpdateSettingView.as_view(), name='update_setting'),
-    path('setting/delete/', DeleteSiteSettingByCategoryAndKeyView.as_view(), name='delete_setting')
+    path('setting/delete/', DeleteSiteSettingByCategoryAndKeyView.as_view(), name='delete_setting'),
+
+    # SLIP SALARY
+    path('slip-salary/', GetSlipSalaryAllView.as_view(), name='get_slip_salary_all'),
 ]
 

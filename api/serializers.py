@@ -107,6 +107,13 @@ class FinanceManagementSerializers(serializers.ModelSerializer):
         model = FinanceManagement
         fields = '__all__'
 
+class SlipSalarySerializers(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = SalarySlip
+        fields = '__all__'
+
 class SiteSettingSerializers(serializers.ModelSerializer):
     class Meta:
         model = SiteSetting
