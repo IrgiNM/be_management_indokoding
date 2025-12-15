@@ -445,3 +445,58 @@ class CreateSlipSalaryView(generics.CreateAPIView):
         )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+# OVERTIME LOG
+class CreateOvertimeLogView(generics.CreateAPIView):
+    queryset = OvertimeLog.objects.all()
+    serializer_class = OvertimeLogSerializers
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class GetOvertimeLogAllView(generics.ListAPIView):
+    queryset = OvertimeLog.objects.all()
+    permission_classes = [IsAuthenticated] 
+    serializer_class = OvertimeLogSerializers
+
+class GetOvertimeLogByUserView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = OvertimeLogSerializers
+
+    def get_queryset(self):
+        email = self.kwargs.get('email')
+        user = User.objects.get(email=email)
+        return OvertimeLog.objects.filter(user=user).order_by('-created_at')
+    
+class getOvertimeLogByTokenView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = OvertimeLogSerializers
+
+    def get_queryset(self):
+        user = self.request.user
+        return OvertimeLog.objects.filter(user=user).order_by('-created_at')
+    
+class UpdateOvertimeLogView(generics.UpdateAPIView):
+    queryset = OvertimeLog.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = OvertimeLogSerializers
+
+    def get_object(self):
+        overtime_id = self.kwargs.get("pk")
+
+        overtime = get_object_or_404(
+            OvertimeLog,
+            id=overtime_id,
+        )
+
+        return overtime
+
+class DeleteOvertimeLogView(generics.DestroyAPIView):
+    queryset = OvertimeLog.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = OvertimeLogSerializers
+
+
+

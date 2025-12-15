@@ -51,5 +51,14 @@ urlpatterns = [
 
     # SLIP SALARY
     path('slip-salary/', GetSlipSalaryAllView.as_view(), name='get_slip_salary_all'),
+
+    # OVERTIME LOG
+    path('overtimelog/', GetOvertimeLogAllView.as_view(), name='get_all_overtime_log'),
+    path('overtimelog/me/', getOvertimeLogByTokenView.as_view(), name='get_all_my_overtime_log'),
+    path('overtimelog/<str:email>/', GetOvertimeLogByUserView.as_view(), name='get_all_overtime_log_by_user'),
+    path('overtime/create/', CreateOvertimeLogView.as_view(), name='create_overtime_log'),
+    path('overtime/update/<pk>/', UpdateOvertimeLogView.as_view(), name='update_overtime_log_by_token'),
+    path('overtime/delete/<pk>/', DeleteOvertimeLogView.as_view(), name='delete_overtime_log'),
 ]
+
 

@@ -114,6 +114,13 @@ class SlipSalarySerializers(serializers.ModelSerializer):
         model = SalarySlip
         fields = '__all__'
 
+class OvertimeLogSerializers(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = OvertimeLog
+        fields = '__all__'
+
 class SiteSettingSerializers(serializers.ModelSerializer):
     class Meta:
         model = SiteSetting
