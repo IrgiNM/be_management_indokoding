@@ -54,11 +54,20 @@ urlpatterns = [
 
     # OVERTIME LOG
     path('overtimelog/', GetOvertimeLogAllView.as_view(), name='get_all_overtime_log'),
-    path('overtimelog/me/', getOvertimeLogByTokenView.as_view(), name='get_all_my_overtime_log'),
+    path('overtimelog/me/', GetOvertimeLogByTokenView.as_view(), name='get_all_my_overtime_log'),
+    path('overtimelog/thisMonth/me/', GetOvertimeLogByTokenThisMonthView.as_view(), name='get_all_my_overtime_log_this_month'),
     path('overtimelog/<str:email>/', GetOvertimeLogByUserView.as_view(), name='get_all_overtime_log_by_user'),
+    path('overtimelog/thisMonth/<str:email>/', GetOvertimeLogByUserThisMonthView.as_view(), name='get_all_overtime_log_by_user_this_month'),
     path('overtime/create/', CreateOvertimeLogView.as_view(), name='create_overtime_log'),
     path('overtime/update/<pk>/', UpdateOvertimeLogView.as_view(), name='update_overtime_log_by_token'),
     path('overtime/delete/<pk>/', DeleteOvertimeLogView.as_view(), name='delete_overtime_log'),
+
+    # EMPLOYEE
+    path('employee/', GetEmployeeAllView.as_view(), name='get_all_employee'),
+    path('employee/me/', GetMyEmployeeView.as_view(), name='get_my_employee_data'),
+    path('employee/get/<str:email>/', GetEmployeeByUserView.as_view(), name='get_employee_by_user'),
+    path('employee/create/<str:email>/', CreateEmployeeView.as_view(), name='create_employee'),
+    path('employee/update/<str:email>/', UpdateEmployeeView.as_view(), name='update_employee_data'),
 ]
 
 

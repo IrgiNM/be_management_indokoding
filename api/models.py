@@ -21,7 +21,6 @@ class SiteSetting(models.Model):
     def __str__(self):
         return f"{self.category} - {self.key}"
 
-
 class Employee(models.Model):
     EMPLOYMENT_STATUS = (
         ("active", "Active"),
@@ -78,7 +77,6 @@ class Employee(models.Model):
     # Helper Methods
     def is_active(self):
         return self.employment_status == "active"
-
 
 class BankAccount(models.Model):
     BANK_CHOICES = [
@@ -179,7 +177,6 @@ class FinanceManagement(models.Model):
             ).exclude(id=self.id).update(is_active=False)
 
         super().save(*args, **kwargs)
-
 
 class OvertimeLog(models.Model):
     STATUS_CHOICES = (

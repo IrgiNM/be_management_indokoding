@@ -457,9 +457,13 @@ class CreateOvertimeLogView(generics.CreateAPIView):
         serializer.save(user=self.request.user)
 
 class GetOvertimeLogAllView(generics.ListAPIView):
-    queryset = OvertimeLog.objects.all()
     permission_classes = [IsAuthenticated] 
     serializer_class = OvertimeLogSerializers
+    def get_queryset(self):
+        now = datetime.now()
+        return OvertimeLog.objects.filter(
+            created_at__year=now.year,
+        ).order_by('-created_at')
 
 class GetOvertimeLogByUserView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
@@ -468,15 +472,50 @@ class GetOvertimeLogByUserView(generics.ListAPIView):
     def get_queryset(self):
         email = self.kwargs.get('email')
         user = User.objects.get(email=email)
-        return OvertimeLog.objects.filter(user=user).order_by('-created_at')
+        now = datetime.now()
+        return OvertimeLog.objects.filter(
+            user=user,
+            created_at__year=now.year,
+        ).order_by('-created_at')
     
-class getOvertimeLogByTokenView(generics.ListAPIView):
+class GetOvertimeLogByUserThisMonthView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = OvertimeLogSerializers
+
+    def get_queryset(self):
+        email = self.kwargs.get('email')
+        user = User.objects.get(email=email)
+        now = datetime.now()
+        return OvertimeLog.objects.filter(
+            user=user,
+            created_at__year=now.year,
+            created_at__month=now.month,
+        ).order_by('-created_at')
+
+class GetOvertimeLogByTokenView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,) 
     serializer_class = OvertimeLogSerializers
 
     def get_queryset(self):
         user = self.request.user
-        return OvertimeLog.objects.filter(user=user).order_by('-created_at')
+        now = datetime.now()
+        return OvertimeLog.objects.filter(
+            user=user,
+            created_at__year=now.year,
+        ).order_by('-created_at')
+    
+class GetOvertimeLogByTokenThisMonthView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = OvertimeLogSerializers
+
+    def get_queryset(self):
+        user = self.request.user
+        now = datetime.now()
+        return OvertimeLog.objects.filter(
+            user=user,
+            created_at__year=now.year,
+            created_at__month=now.month,
+        ).order_by('-created_at')
     
 class UpdateOvertimeLogView(generics.UpdateAPIView):
     queryset = OvertimeLog.objects.all()
@@ -497,6 +536,82 @@ class DeleteOvertimeLogView(generics.DestroyAPIView):
     queryset = OvertimeLog.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = OvertimeLogSerializers
+
+
+# EMPLOYEE
+class CreateEmployeeView(generics.CreateAPIView):
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializers
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'email'
+
+    def create(self, request, *args, **kwargs):
+        email = self.kwargs.get('email')
+
+        if not email:
+            return Response(
+                {'error': 'Field "email" wajib diisi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # cari user
+        user = get_object_or_404(User, email=email)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            user=user,
+            email=user.email
+        )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class UpdateEmployeeView(generics.UpdateAPIView):
+    queryset = Employee.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = EmployeeSerializers
+
+    def get_object(self):
+        email = self.kwargs.get("email")
+
+        employee = get_object_or_404(
+            Employee,
+            email=email,
+        )
+
+        return employee
+
+class GetEmployeeByUserView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = EmployeeSerializers
+    lookup_field = 'email'
+    def get_object(self):
+        email = self.kwargs.get('email')
+        queryset = Employee.objects.filter(
+            email=email,
+        ).first()
+        if not queryset:
+            return None
+        return queryset
+
+class GetMyEmployeeView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = EmployeeSerializers
+    def get_object(self):
+        user = self.request.user
+        queryset = Employee.objects.filter(
+            user=user,
+        ).first()
+        if not queryset:
+            return None
+        return queryset
+
+class GetEmployeeAllView(generics.ListAPIView):
+    queryset = Employee.objects.all().order_by('-created_at')
+    permission_classes = [IsAuthenticated]
+    serializer_class = EmployeeSerializers
+
+
 
 
 
