@@ -10,6 +10,7 @@ from django_celery_beat.models import (
     PeriodicTask,
     SolarSchedule,
 )
+from django_celery_results.models import TaskResult, GroupResult
 from unfold.admin import ModelAdmin
 from unfold.widgets import UnfoldAdminSelectWidget, UnfoldAdminTextInputWidget
 
@@ -18,6 +19,9 @@ admin.site.unregister(IntervalSchedule)
 admin.site.unregister(CrontabSchedule)
 admin.site.unregister(SolarSchedule)
 admin.site.unregister(ClockedSchedule)
+
+admin.site.unregister(TaskResult)
+admin.site.unregister(GroupResult)
 
 
 class UnfoldTaskSelectWidget(UnfoldAdminSelectWidget, TaskSelectWidget):
@@ -53,4 +57,14 @@ class SolarScheduleAdmin(ModelAdmin):
 
 @admin.register(ClockedSchedule)
 class ClockedScheduleAdmin(BaseClockedScheduleAdmin, ModelAdmin):
+    pass
+
+
+@admin.register(TaskResult)
+class TaskResultAdmin(ModelAdmin):
+    pass
+
+
+@admin.register(GroupResult)
+class GroupResultAdmin(ModelAdmin):
     pass
