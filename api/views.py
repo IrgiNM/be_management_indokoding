@@ -611,7 +611,183 @@ class GetEmployeeAllView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = EmployeeSerializers
 
+# BANK ACCOUNT
+class getBankAccountAllView(generics.ListAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+
+class getBankAccountByUserView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+
+    def get_queryset(self):
+        email = self.kwargs.get('email')
+
+        try:
+            employee = Employee.objects.get(email=email)
+        except Employee.DoesNotExist:
+            return BankAccount.objects.none()
+
+        return BankAccount.objects.filter(employee=employee)
+
+class getMyBankAccountView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+    
+    def get_queryset(self):
+        user = self.request.user
+
+        try:
+            employee = Employee.objects.get(email=user.email)
+        except Employee.DoesNotExist:
+            return Response(
+                {"detail": "Data bank belum tersedia"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return BankAccount.objects.filter(employee=employee)
+
+class createMyBankAccountView(generics.CreateAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            employee = Employee.objects.get(email=user.email)
+        except Employee.DoesNotExist:
+            return Response(
+                {"detail": "Data employee tidak ditemukan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(employee=employee)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class createBankAccountView(generics.CreateAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+
+    def create(self, request, *args, **kwargs):
+        email = self.kwargs.get('email')
+
+        try:
+            employee = Employee.objects.get(email=email)
+        except Employee.DoesNotExist:
+            return Response(
+                {"detail": "Data employee tidak ditemukan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(employee=employee)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class updateBankAccountView(generics.UpdateAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
+
+class deleteBankAccountView(generics.DestroyAPIView):
+    queryset = BankAccount.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = BankAccountSerializers
 
 
+# SLIP SALARY
+class getSlipSalaryAllView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SlipSalarySerializers
 
+    def get_queryset(self):
+        now = datetime.now()
+        return SalarySlip.objects.filter(
+            year=now.year,
+            month=now.month
+        )
 
+class CreateSlipSalaryByUserView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SlipSalarySerializers
+
+    def create(self, request, *args, **kwargs):
+        email = self.kwargs.get("email")
+        now = datetime.now()
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Data user tidak ditemukan"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            finance = FinanceManagement.objects.get(
+                user=user,
+                is_active=True
+            )
+        except FinanceManagement.DoesNotExist:
+            return Response(
+                {"detail": "Data finance aktif tidak ditemukan"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if SalarySlip.objects.filter(
+            user=user,
+            year=now.year,
+            month=now.month
+        ).exists():
+            return Response(
+                {"detail": "Slip gaji bulan ini sudah dibuat"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data={})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            user=user,
+            finance=finance,
+            year=now.year,
+            month=now.month
+        )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class DeleteSlipSalaryByUserView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SlipSalarySerializers
+
+    def delete(self, request, *args, **kwargs):
+        email = self.kwargs.get("email")
+        now = datetime.now()
+
+        user = get_object_or_404(User, email=email)
+
+        slip = SalarySlip.objects.filter(
+            user=user,
+            year=now.year,
+            month=now.month
+        ).first()
+
+        if not slip:
+            return Response(
+                {"detail": "Slip gaji bulan ini tidak ditemukan"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        slip.delete()
+
+        return Response(
+            {"detail": "Slip gaji berhasil dihapus"},
+            status=status.HTTP_200_OK
+        )

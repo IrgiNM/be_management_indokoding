@@ -246,7 +246,7 @@ class SalarySlip(models.Model):
     bpjs_health = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     bpjs_employment = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    reimburse_total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    monthly_reimburse = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     overtime_pay = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     net_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
@@ -265,19 +265,20 @@ class SalarySlip(models.Model):
         base = Decimal(self.finance.base_salary)
         spouse = Decimal(self.finance.spouse_allowance)
         child = Decimal(self.finance.child_allowance)
-        gross = base + spouse + child
+        # gross = base + spouse + child
 
         bpjs_health = Decimal("0")
         if self.finance.enable_bpjs_health:
-            bpjs_health = gross * (Decimal(self.finance.bpjs_health_rate_percentage) / Decimal("100"))
+            bpjs_health = base * (Decimal(self.finance.bpjs_health_rate_percentage) / Decimal("100"))
 
         bpjs_employment = Decimal("0")
         if self.finance.enable_bpjs_employment:
-            bpjs_employment = gross * (Decimal(self.finance.bpjs_employment_rate_percentage) / Decimal("100"))
+            bpjs_employment = base * (Decimal(self.finance.bpjs_employment_rate_percentage) / Decimal("100"))
 
         tax = Decimal("0")
         if self.finance.enable_tax:
-            tax = gross * (Decimal(self.finance.tax_rate_percentage) / Decimal("100"))
+            # tax = base * (Decimal(self.finance.tax_rate_percentage) / Decimal("100"))
+            tax = self.finance.tax_rate_percentage
 
         reimburse_month = Reimbursement.objects.filter(
                 status="Approved",
@@ -288,21 +289,23 @@ class SalarySlip(models.Model):
 
         overtime_hours = OvertimeLog.objects.filter(
                 status="approved",
-                paid_date__year=self.year,
-                paid_date__month=self.month,
+                created_at__year=self.year,
+                created_at__month=self.month,
+                # paid_date__year=self.year,
+                # paid_date__month=self.month,
                 user=self.user
             ).aggregate(total_hours=Sum("duration_hours")).get("total_hours") or 0
 
         overtime_rate = self.finance.base_salary / Decimal(173)  # 173 adalah rata-rata jumlah jam kerja bulanan
-        overtime_pay = Decimal(overtime_hours) * overtime_rate
+        overtime_pay = (Decimal(overtime_hours) * overtime_rate) * 2
 
-        net = gross + reimburse_month + overtime_pay - (bpjs_health + bpjs_employment + tax)
+        net = base + reimburse_month + overtime_pay - (bpjs_health + bpjs_employment + tax)
 
-        self.gross_salary = gross
+        self.gross_salary = base
         self.bpjs_health = bpjs_health
         self.bpjs_employment = bpjs_employment
         self.tax_amount = tax
-        self.reimburse_total_amount = reimburse_month
+        self.monthly_reimburse = reimburse_month
         self.overtime_pay = overtime_pay
         self.net_salary = net
 

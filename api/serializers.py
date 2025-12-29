@@ -113,6 +113,20 @@ class SlipSalarySerializers(serializers.ModelSerializer):
     class Meta:
         model = SalarySlip
         fields = '__all__'
+        read_only_fields = (
+            "user",
+            "finance",
+            "year",
+            "month",
+            "gross_salary",
+            "bpjs_health",
+            "bpjs_employment",
+            "tax_amount",
+            "reimburse_total_amount",
+            "overtime_pay",
+            "net_salary",
+            "created_at",
+        )
 
 class EmployeeSerializers(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
@@ -151,4 +165,14 @@ class SiteSettingSerializers(serializers.ModelSerializer):
             raise serializers.ValidationError("Setting ini sudah ada (kategori + key harus unik).")
 
         return data
-    
+
+class BankAccountSerializers(serializers.ModelSerializer):
+    employee_detail = EmployeeSerializers(source='employee',read_only=True)
+
+    class Meta:
+        model = BankAccount
+        fields = '__all__'
+        read_only_fields = ('employee',)
+        
+
+

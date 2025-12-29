@@ -68,6 +68,20 @@ urlpatterns = [
     path('employee/get/<str:email>/', GetEmployeeByUserView.as_view(), name='get_employee_by_user'),
     path('employee/create/<str:email>/', CreateEmployeeView.as_view(), name='create_employee'),
     path('employee/update/<str:email>/', UpdateEmployeeView.as_view(), name='update_employee_data'),
+
+    # BANK ACCOUNT
+    path('bankAccount/', getBankAccountAllView.as_view(), name='get_all_bank_account'),
+    path('bankAccount/me/', getMyBankAccountView.as_view(), name='get_my_bank_account'),
+    path('bankAccount/<str:email>/', getBankAccountByUserView.as_view(), name='get_bank_account_by_user'),
+    path('bankAccount/create/self/', createMyBankAccountView.as_view(), name='create_my_bank_account'),
+    path('bankAccount/create/<str:email>/', createBankAccountView.as_view(), name='create_bank_account'),
+    path('bankAccount/update/<int:pk>/', updateBankAccountView.as_view(), name='update_bank_account'),
+    path('bankAccount/delete/<int:pk>/', deleteBankAccountView.as_view(), name='delete_bank_account'),
+
+    # SLIP SALARY
+    path('slipSalary/', getSlipSalaryAllView.as_view(), name='get_all_slip_salary'),
+    path('slipSalary/create/<str:email>/', CreateSlipSalaryByUserView.as_view(), name='create_slip_salary_by_user'),
+    path('slipSalary/delete/<str:email>/', DeleteSlipSalaryByUserView.as_view(), name='delete_slip_salary_by_user'),
 ]
 
 

@@ -9,6 +9,9 @@ class Command(BaseCommand):
         ("general", "site_name", "HR & Payroll System"),
         ("general", "company_name", "PT Teknologi Indonesia"),
         ("general", "company_email", "admin@company.com"),
+        ("general", "company_city", "Yogyakarta"),
+        ("general", "admin_name", "Siti Izza Nur Azizah"),
+        ("general", "company_address", "Jl. Ngadinegaran Blok MJ III No. 144 Mantrijeron Yogyakarta"),
 
         ("payroll", "bpjs_health_percentage", "1.0"),
         ("payroll", "bpjs_employment_percentage", "2.0"),
